@@ -43,13 +43,32 @@ public class NetCommandHandlerBTB extends NetCommandHandler {
             HashMap<String, Object> objectHashMap = objectToHashMap(jsonObject.getJSONObject("data"));
             switch (command) {
                 case "reloadGroups":
-                    plugin.getPermissionsLoader().loadGroups();
                     plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
                         @Override
                         public void run() {
+                            plugin.getPermissionsLoader().loadGroups();
                             for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
                                 plugin.getPermissionsLoader().loadUserInfo(player);
                             }
+                        }
+                    }, 1, TimeUnit.MILLISECONDS);
+                    break;
+                case "reloadUser":
+                    final String playerUUID = (String) objectHashMap.get("playerUUID");
+                    plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
+                        @Override
+                        public void run() {
+                            ProxiedPlayer player = null;
+                            for (ProxiedPlayer player1 : plugin.getProxy().getPlayers()) {
+                                if (player1.getUniqueId().toString().equals(playerUUID)) {
+                                    player = player1;
+                                    break;
+                                }
+                            }
+                            if (player == null) {
+                                return;
+                            }
+                            plugin.getPermissionsLoader().loadUserInfo(player);
                         }
                     }, 1, TimeUnit.MILLISECONDS);
                     break;

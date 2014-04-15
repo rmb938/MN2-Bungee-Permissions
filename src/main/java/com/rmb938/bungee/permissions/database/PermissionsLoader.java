@@ -9,11 +9,9 @@ import com.rmb938.database.DatabaseAPI;
 import com.rmb938.jedis.net.command.bungee.NetCommandBTB;
 import com.rmb938.jedis.net.command.bungee.NetCommandBTS;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.util.CaseInsensitiveSet;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Map;
+import java.util.*;
 
 public class PermissionsLoader {
 
@@ -65,8 +63,8 @@ public class PermissionsLoader {
         group.setWeight(weight);
 
         BasicDBList inheritance = (BasicDBList) dbObject.get("inheritance");
-        while (inheritance.iterator().hasNext()) {
-            String groupName1 = (String) inheritance.iterator().next();
+        for (Object anInheritance : inheritance) {
+            String groupName1 = (String) anInheritance;
             if (Group.getGroups().containsKey(groupName1)) {
                 group.getInheritance().add(Group.getGroups().get(groupName1));
             } else {
@@ -82,8 +80,8 @@ public class PermissionsLoader {
         }
 
         BasicDBList permissions = (BasicDBList) dbObject.get("permissions");
-        while (permissions.iterator().hasNext()) {
-            BasicDBObject dbObject1 = (BasicDBObject) permissions.iterator().next();
+        for (Object permission1 : permissions) {
+            BasicDBObject dbObject1 = (BasicDBObject) permission1;
             String permissionString = (String) dbObject1.get("permission");
             String serverType = (String) dbObject1.get("serverType");
             Permission permission = new Permission();
@@ -101,7 +99,6 @@ public class PermissionsLoader {
         groupObject.append("permissions", new BasicDBList());
 
         DatabaseAPI.getMongoDatabase().insert("mn2_permissions_groups", groupObject);
-
         loadGroup(groupName);
     }
 
@@ -182,37 +179,143 @@ public class PermissionsLoader {
         netCommandBTB.flush();
     }
 
-    public void userAddGroup(ProxiedPlayer player, Group group) {
-        DatabaseAPI.getMongoDatabase().updateDocument("mn2_users", new BasicDBObject("userUUID", player.getUniqueId().toString()),
+    public void userAddGroup(String uuid, Group group) {
+        DatabaseAPI.getMongoDatabase().updateDocument("mn2_users", new BasicDBObject("userUUID", uuid),
                 new BasicDBObject("$push", new BasicDBObject("groups", group.getGroupName())));
-        loadUserInfo(player);
-        NetCommandBTS netCommandBTS = new NetCommandBTS("reloadUser", basePlugin.getIP(), player.getServer().getInfo().getName());
-        netCommandBTS.addArg("playerUUID", player.getUniqueId().toString());
-        netCommandBTS.flush();
+        ProxiedPlayer player = null;
+        for (ProxiedPlayer player1 : plugin.getProxy().getPlayers()) {
+            if (player1.getUniqueId().toString().equals(uuid)) {
+                player = player1;
+                break;
+            }
+        }
+        if (player != null) {
+            loadUserInfo(player);
+            NetCommandBTS netCommandBTS = new NetCommandBTS("reloadUser", basePlugin.getIP(), player.getServer().getInfo().getName());
+            netCommandBTS.addArg("playerUUID", uuid);
+            netCommandBTS.flush();
+        } else {
+            NetCommandBTS netCommandBTS = new NetCommandBTS("reloadUser", basePlugin.getIP(), "*");
+            netCommandBTS.addArg("playerUUID", uuid);
+            netCommandBTS.flush();
+        }
+        NetCommandBTB netCommandBTB = new NetCommandBTB("reloadUser", basePlugin.getIP(), "*");
+        netCommandBTB.addArg("playerUUID", uuid);
+        netCommandBTB.flush();
     }
 
-    public void userRemoveGroup(ProxiedPlayer player, Group group) {
-        DatabaseAPI.getMongoDatabase().updateDocument("mn2_users", new BasicDBObject("userUUID", player.getUniqueId().toString()),
+    public void userRemoveGroup(String uuid, Group group) {
+        DatabaseAPI.getMongoDatabase().updateDocument("mn2_users", new BasicDBObject("userUUID", uuid),
                 new BasicDBObject("$pull", new BasicDBObject("groups", group.getGroupName())));
-        loadUserInfo(player);
-        NetCommandBTS netCommandBTS = new NetCommandBTS("reloadUser", basePlugin.getIP(), player.getServer().getInfo().getName());
-        netCommandBTS.flush();
+        ProxiedPlayer player = null;
+        for (ProxiedPlayer player1 : plugin.getProxy().getPlayers()) {
+            if (player1.getUniqueId().toString().equals(uuid)) {
+                player = player1;
+                break;
+            }
+        }
+        if (player != null) {
+            loadUserInfo(player);
+            NetCommandBTS netCommandBTS = new NetCommandBTS("reloadUser", basePlugin.getIP(), player.getServer().getInfo().getName());
+            netCommandBTS.addArg("playerUUID", uuid);
+            netCommandBTS.flush();
+        } else {
+            NetCommandBTS netCommandBTS = new NetCommandBTS("reloadUser", basePlugin.getIP(), "*");
+            netCommandBTS.addArg("playerUUID", uuid);
+            netCommandBTS.flush();
+        }
+        NetCommandBTB netCommandBTB = new NetCommandBTB("reloadUser", basePlugin.getIP(), "*");
+        netCommandBTB.addArg("playerUUID", uuid);
+        netCommandBTB.flush();
     }
 
-    public void userAddPermission(ProxiedPlayer player, Permission permission) {
-        DatabaseAPI.getMongoDatabase().updateDocument("mn2_users", new BasicDBObject("userUUID", player.getUniqueId().toString()),
+    public void userAddPermission(String uuid, Permission permission) {
+        DatabaseAPI.getMongoDatabase().updateDocument("mn2_users", new BasicDBObject("userUUID", uuid),
                 new BasicDBObject("$push", new BasicDBObject("permissions", new BasicDBObject("permission", permission.getPermission()).append("serverType", permission.getServerType()))));
-        loadUserInfo(player);
-        NetCommandBTS netCommandBTS = new NetCommandBTS("reloadUser", basePlugin.getIP(), player.getServer().getInfo().getName());
-        netCommandBTS.flush();
+        ProxiedPlayer player = null;
+        for (ProxiedPlayer player1 : plugin.getProxy().getPlayers()) {
+            if (player1.getUniqueId().toString().equals(uuid)) {
+                player = player1;
+                break;
+            }
+        }
+        if (player != null) {
+            loadUserInfo(player);
+            NetCommandBTS netCommandBTS = new NetCommandBTS("reloadUser", basePlugin.getIP(), player.getServer().getInfo().getName());
+            netCommandBTS.addArg("playerUUID", uuid);
+            netCommandBTS.flush();
+        } else {
+            NetCommandBTS netCommandBTS = new NetCommandBTS("reloadUser", basePlugin.getIP(), "*");
+            netCommandBTS.addArg("playerUUID", uuid);
+            netCommandBTS.flush();
+        }
+        NetCommandBTB netCommandBTB = new NetCommandBTB("reloadUser", basePlugin.getIP(), "*");
+        netCommandBTB.addArg("playerUUID", uuid);
+        netCommandBTB.flush();
     }
 
-    public void userRemovePermission(ProxiedPlayer player, Permission permission) {
-        DatabaseAPI.getMongoDatabase().updateDocument("mn2_users", new BasicDBObject("userUUID", player.getUniqueId().toString()),
+    public void userRemovePermission(String uuid, Permission permission) {
+        DatabaseAPI.getMongoDatabase().updateDocument("mn2_users", new BasicDBObject("userUUID", uuid),
                 new BasicDBObject("$pull", new BasicDBObject("permissions", new BasicDBObject("permission", permission.getPermission()).append("serverType", permission.getServerType()))));
-        loadUserInfo(player);
-        NetCommandBTS netCommandBTS = new NetCommandBTS("reloadUser", basePlugin.getIP(), player.getServer().getInfo().getName());
-        netCommandBTS.flush();
+        ProxiedPlayer player = null;
+        for (ProxiedPlayer player1 : plugin.getProxy().getPlayers()) {
+            if (player1.getUniqueId().toString().equals(uuid)) {
+                player = player1;
+                break;
+            }
+        }
+        if (player != null) {
+            loadUserInfo(player);
+            NetCommandBTS netCommandBTS = new NetCommandBTS("reloadUser", basePlugin.getIP(), player.getServer().getInfo().getName());
+            netCommandBTS.addArg("playerUUID", uuid);
+            netCommandBTS.flush();
+        } else {
+            NetCommandBTS netCommandBTS = new NetCommandBTS("reloadUser", basePlugin.getIP(), "*");
+            netCommandBTS.addArg("playerUUID", uuid);
+            netCommandBTS.flush();
+        }
+        NetCommandBTB netCommandBTB = new NetCommandBTB("reloadUser", basePlugin.getIP(), "*");
+        netCommandBTB.addArg("playerUUID", uuid);
+        netCommandBTB.flush();
+    }
+
+    public Map.Entry<String, ArrayList<Group>> userGetGroups(String uuid) {
+        ArrayList<Group> groups = new ArrayList<>();
+        DBObject userObject = DatabaseAPI.getMongoDatabase().findOne("mn2_users", new BasicDBObject("userUUID", uuid));
+        if (userObject == null) {
+            return null;
+        }
+        String userName = (String) userObject.get("lastUserName");
+        BasicDBList groupsList = (BasicDBList) userObject.get("groups");
+        for (Object aGroupsList : groupsList) {
+            String groupName = (String) aGroupsList;
+            if (Group.getGroups().containsKey(groupName)) {
+                groups.add(Group.getGroups().get(groupName));
+            }
+        }
+
+        return new AbstractMap.SimpleEntry<>(userName, groups);
+    }
+
+    public Map.Entry<String, ArrayList<Permission>> userGetPermissions(String uuid) {
+        ArrayList<Permission> permissions = new ArrayList<>();
+        DBObject userObject = DatabaseAPI.getMongoDatabase().findOne("mn2_users", new BasicDBObject("userUUID", uuid));
+        if (userObject == null) {
+            return null;
+        }
+        String userName = (String) userObject.get("lastUserName");
+        BasicDBList permissionsList = (BasicDBList) userObject.get("permissions");
+        for (Object aPermissionsList : permissionsList) {
+            DBObject permissionObject = (DBObject) aPermissionsList;
+            String permissionString = (String) permissionObject.get("permission");
+            String serverType = (String) permissionObject.get("serverType");
+            Permission permission = new Permission();
+            permission.setPermission(permissionString);
+            permission.setServerType(serverType);
+            permissions.add(permission);
+        }
+
+        return new AbstractMap.SimpleEntry<>(userName, permissions);
     }
 
     private void addInheritance(Group group, ProxiedPlayer player) {
@@ -241,7 +344,16 @@ public class PermissionsLoader {
             return;
         }
 
-        player.getPermissions().clear();
+        Collection<String> oldGroups = new CaseInsensitiveSet(player.getGroups());
+        Collection<String> oldPermissions = new CaseInsensitiveSet(player.getPermissions());
+
+        for (String groupName : oldGroups) {
+            player.removeGroups(groupName);
+        }
+
+        for (String permission : oldPermissions) {
+            player.setPermission(permission, false);
+        }
 
         if (userObject.containsField("groups") == false) {
             createUserInfo(player);
@@ -251,8 +363,8 @@ public class PermissionsLoader {
         BasicDBList groupsList = (BasicDBList) userObject.get("groups");
         ArrayList<Group> groups = new ArrayList<>();
         ArrayList<Permission> permissions = new ArrayList<>();
-        while (groupsList.iterator().hasNext()) {
-            String groupName = (String) groupsList.iterator().next();
+        for (Object aGroupsList : groupsList) {
+            String groupName = (String) aGroupsList;
             if (Group.getGroups().containsKey(groupName)) {
                 groups.add(Group.getGroups().get(groupName));
             } else {
@@ -264,6 +376,8 @@ public class PermissionsLoader {
 
         if (groups.size() == 0) {
             groups.add(Group.getGroups().get(plugin.getMainConfig().defaultGroup));
+            DatabaseAPI.getMongoDatabase().updateDocument("mn2_users", new BasicDBObject("userUUID", player.getUniqueId().toString()),
+                    new BasicDBObject("$push", new BasicDBObject("groups", plugin.getMainConfig().defaultGroup)));
         } else {
             Collections.sort(groups, new Comparator<Group>() {
                 @Override
@@ -282,8 +396,8 @@ public class PermissionsLoader {
         addInheritance(groups.get(0), player);
 
         BasicDBList permissionsList = (BasicDBList) userObject.get("permissions");
-        while (permissionsList.iterator().hasNext()) {
-            DBObject permissionObject = (DBObject) permissionsList.iterator().next();
+        for (Object aPermissionsList : permissionsList) {
+            DBObject permissionObject = (DBObject) aPermissionsList;
             String permissionString = (String) permissionObject.get("permission");
             String serverType = (String) permissionObject.get("serverType");
             Permission permission = new Permission();
