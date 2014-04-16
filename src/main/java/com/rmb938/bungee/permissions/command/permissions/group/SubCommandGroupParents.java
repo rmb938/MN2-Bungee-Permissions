@@ -1,37 +1,31 @@
-package com.rmb938.bungee.permissions.command.permissions;
+package com.rmb938.bungee.permissions.command.permissions.group;
 
 import com.rmb938.bungee.base.utils.ChatPaginator;
 import com.rmb938.bungee.permissions.MN2BungeePermissions;
+import com.rmb938.bungee.permissions.command.permissions.PermissionSubCommand;
 import com.rmb938.bungee.permissions.entity.Group;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.TextComponent;
 
-import java.util.ArrayList;
-import java.util.Map;
-
-public class SubCommandPlayerGroups extends PermissionSubCommand {
+public class SubCommandGroupParents extends PermissionSubCommand {
 
     private final MN2BungeePermissions plugin;
 
-    public SubCommandPlayerGroups(MN2BungeePermissions plugin) {
-        super(plugin, "player groups");
-        this.setUsage("player <player> groups");
-        this.setDescription("Lists the groups the player is a member of");
+    public SubCommandGroupParents(MN2BungeePermissions plugin) {
+        super(plugin, "group parent");
+        this.setUsage("group <group> parents");
+        this.setDescription("Lists the parents of a group");
         this.plugin = plugin;
     }
 
     @Override
     public void execute(CommandSender sender, String[] strings) {
-        String uuid = strings[1];
-        Map.Entry<String, ArrayList<Group>> entry = plugin.getPermissionsLoader().userGetGroups(uuid);
-        if (entry == null) {
-            sender.sendMessage(new TextComponent(ChatColor.RED+"User "+uuid+" not found in database."));
-            return;
-        }
+        String groupName = strings[1];
+        Group group = Group.getGroups().get(groupName);
         StringBuilder sb = new StringBuilder();
-        for (Group group : entry.getValue()) {
-            sb.append(group.getGroupName());
+        for (Group g1 : group.getInheritance()) {
+            sb.append(g1.getGroupName());
             sb.append("\n");
         }
         int pageNumber = 1;
@@ -39,7 +33,7 @@ public class SubCommandPlayerGroups extends PermissionSubCommand {
             try {
                 pageNumber = Integer.parseInt(strings[3]);
             } catch (Exception ex) {
-                sender.sendMessage(new TextComponent(ChatColor.RED+"Usage: /permissions player <player> groups [page]"));
+                sender.sendMessage(new TextComponent(ChatColor.RED+"Usage: /permissions group <group> parents [page]"));
                 return;
             }
         }
@@ -48,8 +42,8 @@ public class SubCommandPlayerGroups extends PermissionSubCommand {
         header.append(ChatColor.YELLOW);
         header.append("--------- ");
         header.append(ChatColor.WHITE);
-        header.append("User Groups: ");
-        header.append(entry.getKey());
+        header.append("Group Parents:");
+        header.append(group.getGroupName());
         header.append(" ");
         if (chatPage.getTotalPages() > 1) {
             header.append("(");
@@ -57,6 +51,10 @@ public class SubCommandPlayerGroups extends PermissionSubCommand {
             header.append("/");
             header.append(chatPage.getTotalPages());
             header.append(") ");
+        }
+        header.append(ChatColor.YELLOW);
+        for (int i = header.length(); i < ChatPaginator.GUARANTEED_NO_WRAP_CHAT_PAGE_WIDTH; i++) {
+            header.append("-");
         }
         sender.sendMessage(new TextComponent(header.toString()));
         for (String line : chatPage.getLines()) {

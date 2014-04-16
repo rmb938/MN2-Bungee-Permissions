@@ -1,6 +1,7 @@
-package com.rmb938.bungee.permissions.command.permissions;
+package com.rmb938.bungee.permissions.command.permissions.player;
 
 import com.rmb938.bungee.permissions.MN2BungeePermissions;
+import com.rmb938.bungee.permissions.command.permissions.PermissionSubCommand;
 import com.rmb938.bungee.permissions.entity.Permission;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
@@ -27,7 +28,10 @@ public class SubCommandPlayerGet extends PermissionSubCommand {
             sender.sendMessage(new TextComponent(ChatColor.RED+"Usage: /permissions player <player> get <permission>"));
             return;
         }
-        String permissionString = strings[3];
+        String permissionString = strings[3].toLowerCase();
+        if (permissionString.startsWith("-")) {
+            permissionString = permissionString.substring(1, permissionString.length());
+        }
         Map.Entry<String, ArrayList<Permission>> entry = plugin.getPermissionsLoader().userGetPermissions(uuid);
         if (entry == null) {
             sender.sendMessage(new TextComponent(ChatColor.RED+"User "+uuid+" not found in database."));
@@ -35,7 +39,11 @@ public class SubCommandPlayerGet extends PermissionSubCommand {
         }
         ArrayList<Permission> permissions = new ArrayList<>();
         for (Permission permission : entry.getValue()) {
-            if (permission.getPermission().equalsIgnoreCase(permissionString)) {
+            String permString = permission.getPermission();
+            if (permString.startsWith("-")) {
+                permString = permString.substring(1, permString.length());
+            }
+            if (permString.equalsIgnoreCase(permissionString)) {
                 permissions.add(permission);
             }
         }
@@ -45,14 +53,15 @@ public class SubCommandPlayerGet extends PermissionSubCommand {
         }
         sender.sendMessage(new TextComponent(ChatColor.YELLOW+"Checking User "+entry.getKey()+" for permission "+permissionString));
         for (Permission permission : permissions) {
+            String permString;
             boolean perm = true;
-            if (permissionString.startsWith("-")) {
+            if (permission.getPermission().startsWith("-")) {
                 perm = false;
-                permissionString = ChatColor.RED+permissionString.substring(1, permissionString.length());
+                permString = ChatColor.RED+permission.getPermission().substring(1, permission.getPermission().length());
             } else {
-                permissionString = ChatColor.GREEN+permissionString;
+                permString = ChatColor.GREEN+permission.getPermission();
             }
-            sender.sendMessage(new TextComponent(permissionString+":"+perm+" Server Type: "+permission.getServerType()));
+            sender.sendMessage(new TextComponent(permString + ":" + perm + " Server Type: " + permission.getServerType()));
         }
     }
 }

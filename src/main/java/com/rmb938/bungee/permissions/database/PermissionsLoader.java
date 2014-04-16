@@ -79,6 +79,21 @@ public class PermissionsLoader {
             }
         }
 
+        if (group.getInheritance().isEmpty() == false) {
+            Collections.sort(group.getInheritance(), new Comparator<Group>() {
+                @Override
+                public int compare(Group o1, Group o2) {
+                    if (o1.getWeight() > o2.getWeight()) {
+                        return -1;
+                    }
+                    if (o1.getWeight() < o2.getWeight()) {
+                        return 1;
+                    }
+                    return 0;
+                }
+            });
+        }
+
         BasicDBList permissions = (BasicDBList) dbObject.get("permissions");
         for (Object permission1 : permissions) {
             BasicDBObject dbObject1 = (BasicDBObject) permission1;
@@ -129,7 +144,7 @@ public class PermissionsLoader {
     }
 
     public void removeGroupPermission(Group group, Permission permission) {
-        DatabaseAPI.getMongoDatabase().updateDocument("mn2_permission_groups", new BasicDBObject("groupName", group.getGroupName()),
+        DatabaseAPI.getMongoDatabase().updateDocument("mn2_permissions_groups", new BasicDBObject("groupName", group.getGroupName()),
                 new BasicDBObject("$pull", new BasicDBObject("permissions", new BasicDBObject("permission", permission.getPermission()).append("serverType", permission.getServerType()))));
         loadGroups();
         for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
@@ -154,7 +169,7 @@ public class PermissionsLoader {
     }
 
     public void addGroupParent(Group group, Group parent) {
-        DatabaseAPI.getMongoDatabase().updateDocument("mn2_permission_groups", new BasicDBObject("groupName", group.getGroupName()),
+        DatabaseAPI.getMongoDatabase().updateDocument("mn2_permissions_groups", new BasicDBObject("groupName", group.getGroupName()),
                 new BasicDBObject("$push", new BasicDBObject("inheritance", parent.getGroupName())));
         loadGroups();
         for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
@@ -167,7 +182,7 @@ public class PermissionsLoader {
     }
 
     public void removeGroupParent(Group group, Group parent) {
-        DatabaseAPI.getMongoDatabase().updateDocument("mn2_permission_groups", new BasicDBObject("groupName", group.getGroupName()),
+        DatabaseAPI.getMongoDatabase().updateDocument("mn2_permissions_groups", new BasicDBObject("groupName", group.getGroupName()),
                 new BasicDBObject("$pull", new BasicDBObject("inheritance", parent.getGroupName())));
         loadGroups();
         for (ProxiedPlayer player : plugin.getProxy().getPlayers()) {
@@ -374,26 +389,21 @@ public class PermissionsLoader {
             }
         }
 
-        if (groups.size() == 0) {
-            groups.add(Group.getGroups().get(plugin.getMainConfig().defaultGroup));
-            DatabaseAPI.getMongoDatabase().updateDocument("mn2_users", new BasicDBObject("userUUID", player.getUniqueId().toString()),
-                    new BasicDBObject("$push", new BasicDBObject("groups", plugin.getMainConfig().defaultGroup)));
-        } else {
+        if (groups.isEmpty() == false) {
             Collections.sort(groups, new Comparator<Group>() {
                 @Override
                 public int compare(Group o1, Group o2) {
                     if (o1.getWeight() > o2.getWeight()) {
-                        return 1;
+                        return -1;
                     }
                     if (o1.getWeight() < o2.getWeight()) {
-                        return -1;
+                        return 1;
                     }
                     return 0;
                 }
             });
+            addInheritance(groups.get(0), player);
         }
-
-        addInheritance(groups.get(0), player);
 
         BasicDBList permissionsList = (BasicDBList) userObject.get("permissions");
         for (Object aPermissionsList : permissionsList) {
@@ -426,5 +436,7 @@ public class PermissionsLoader {
                 new BasicDBObject("$set", new BasicDBObject("groups", new BasicDBList())));
         DatabaseAPI.getMongoDatabase().updateDocument("mn2_users", new BasicDBObject("userUUID", player.getUniqueId().toString()),
                 new BasicDBObject("$set", new BasicDBObject("permissions", new BasicDBList())));
+        DatabaseAPI.getMongoDatabase().updateDocument("mn2_users", new BasicDBObject("userUUID", player.getUniqueId().toString()),
+                new BasicDBObject("$push", new BasicDBObject("groups", plugin.getMainConfig().defaultGroup)));
     }
 }

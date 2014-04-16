@@ -1,6 +1,7 @@
-package com.rmb938.bungee.permissions.command.permissions;
+package com.rmb938.bungee.permissions.command.permissions.player;
 
 import com.rmb938.bungee.permissions.MN2BungeePermissions;
+import com.rmb938.bungee.permissions.command.permissions.PermissionSubCommand;
 import com.rmb938.bungee.permissions.entity.Group;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;

@@ -1,8 +1,9 @@
-package com.rmb938.bungee.permissions.command.permissions;
+package com.rmb938.bungee.permissions.command.permissions.player;
 
 import com.rmb938.bungee.base.utils.ChatPaginator;
 import com.rmb938.bungee.permissions.MN2BungeePermissions;
-import com.rmb938.bungee.permissions.entity.Permission;
+import com.rmb938.bungee.permissions.command.permissions.PermissionSubCommand;
+import com.rmb938.bungee.permissions.entity.Group;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -10,40 +11,28 @@ import net.md_5.bungee.api.chat.TextComponent;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class SubCommandPlayerPermissions extends PermissionSubCommand {
+public class SubCommandPlayerGroups extends PermissionSubCommand {
 
     private final MN2BungeePermissions plugin;
 
-    public SubCommandPlayerPermissions(MN2BungeePermissions plugin) {
-        super(plugin, "player permissions");
-        this.setUsage("player <player> permissions");
-        this.setDescription("Lists the permissions the player has set");
+    public SubCommandPlayerGroups(MN2BungeePermissions plugin) {
+        super(plugin, "player groups");
+        this.setUsage("player <player> groups");
+        this.setDescription("Lists the groups the player is a member of");
         this.plugin = plugin;
     }
 
     @Override
     public void execute(CommandSender sender, String[] strings) {
         String uuid = strings[1];
-        Map.Entry<String, ArrayList<Permission>> entry = plugin.getPermissionsLoader().userGetPermissions(uuid);
+        Map.Entry<String, ArrayList<Group>> entry = plugin.getPermissionsLoader().userGetGroups(uuid);
         if (entry == null) {
             sender.sendMessage(new TextComponent(ChatColor.RED+"User "+uuid+" not found in database."));
             return;
         }
         StringBuilder sb = new StringBuilder();
-        for (Permission permission : entry.getValue()) {
-            String permissionString = permission.getPermission();
-            boolean perm = true;
-            if (permissionString.startsWith("-")) {
-                perm = false;
-                permissionString = ChatColor.RED+permissionString.substring(1, permissionString.length());
-            } else {
-                permissionString = ChatColor.GREEN+permissionString;
-            }
-            sb.append(permissionString);
-            sb.append(":");
-            sb.append(perm);
-            sb.append(" Server Type: ");
-            sb.append(permission.getServerType());
+        for (Group group : entry.getValue()) {
+            sb.append(group.getGroupName());
             sb.append("\n");
         }
         int pageNumber = 1;
@@ -51,7 +40,7 @@ public class SubCommandPlayerPermissions extends PermissionSubCommand {
             try {
                 pageNumber = Integer.parseInt(strings[3]);
             } catch (Exception ex) {
-                sender.sendMessage(new TextComponent(ChatColor.RED+"Usage: /permissions player <player> permissions [page]"));
+                sender.sendMessage(new TextComponent(ChatColor.RED+"Usage: /permissions player <player> groups [page]"));
                 return;
             }
         }
@@ -60,7 +49,7 @@ public class SubCommandPlayerPermissions extends PermissionSubCommand {
         header.append(ChatColor.YELLOW);
         header.append("--------- ");
         header.append(ChatColor.WHITE);
-        header.append("User Permissions: ");
+        header.append("User Groups: ");
         header.append(entry.getKey());
         header.append(" ");
         if (chatPage.getTotalPages() > 1) {
