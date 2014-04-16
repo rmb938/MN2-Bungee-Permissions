@@ -32,6 +32,10 @@ public class SubCommandGroupAddParent extends PermissionSubCommand {
             sender.sendMessage(new TextComponent(ChatColor.RED+"Parent group "+parentName+" does not exist."));
             return;
         }
+        if (parent.getInheritance().contains(group)) {
+            sender.sendMessage(new TextComponent(ChatColor.RED+"Parent group "+parentName+" has "+group.getGroupName()+" as a parent. You cannot loop parents."));
+            return;
+        }
         if (group.getInheritance().contains(parent)) {
             sender.sendMessage(new TextComponent(ChatColor.RED+parent.getGroupName()+" is already a parent of "+group.getGroupName()));
             return;
