@@ -14,8 +14,8 @@ public class SubCommandGroupPermissions extends PermissionSubCommand {
     private final MN2BungeePermissions plugin;
 
     public SubCommandGroupPermissions(MN2BungeePermissions plugin) {
-        super(plugin, "group parent");
-        this.setUsage("group <group> parents");
+        super(plugin, "group permissions");
+        this.setUsage("group <group> permissions");
         this.setDescription("Lists the permissions the group has set");
         this.plugin = plugin;
     }
@@ -46,7 +46,7 @@ public class SubCommandGroupPermissions extends PermissionSubCommand {
             try {
                 pageNumber = Integer.parseInt(strings[3]);
             } catch (Exception ex) {
-                sender.sendMessage(new TextComponent(ChatColor.RED+"Usage: /permissions player <player> permissions [page]"));
+                sender.sendMessage(new TextComponent(ChatColor.RED+"Usage: /permissions group <group> permissions [page]"));
                 return;
             }
         }

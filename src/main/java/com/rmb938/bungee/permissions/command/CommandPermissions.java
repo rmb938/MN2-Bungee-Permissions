@@ -118,7 +118,7 @@ public class CommandPermissions extends ExtendedCommand {
                 }
                 String groupName = args[1].toLowerCase();
                 if (groupName.equals("list")) {
-                    PermissionSubCommand.getSubCommandHashMap().get("list").execute(sender, args);
+                    PermissionSubCommand.getSubCommandHashMap().get("group list").execute(sender, args);
                     return;
                 }
                 if (Group.getGroups().containsKey(groupName) == false && args[2].equalsIgnoreCase("create") == false) {

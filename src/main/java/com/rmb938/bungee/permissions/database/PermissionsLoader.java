@@ -75,7 +75,7 @@ public class PermissionsLoader {
                 if (getParents(groupName1).contains(group.getGroupName())) {
                     plugin.getLogger().warning("Preventing group parent loop "+group.getGroupName()+" and "+groupName1);
                     DatabaseAPI.getMongoDatabase().updateDocument("mn2_permission_groups", new BasicDBObject("groupName", group.getGroupName()),
-                            new BasicDBObject("$pull", new BasicDBObject("inheritance", groupName)));
+                            new BasicDBObject("$pull", new BasicDBObject("inheritance", groupName1)));
                     continue;
                 }
                 loadGroup(groupName1);
@@ -396,6 +396,7 @@ public class PermissionsLoader {
 
         if (userObject.containsField("groups") == false) {
             createUserInfo(player);
+            loadUserInfo(player);
             return;
         }
 
@@ -426,7 +427,14 @@ public class PermissionsLoader {
                     return 0;
                 }
             });
-            addInheritance(groups.get(0), player);
+        } else {
+            DatabaseAPI.getMongoDatabase().updateDocument("mn2_users", new BasicDBObject("userUUID", player.getUniqueId().toString()),
+                    new BasicDBObject("$push", new BasicDBObject("groups", plugin.getMainConfig().defaultGroup)));
+            groups.add(Group.getGroups().get(plugin.getMainConfig().defaultGroup));
+        }
+
+        for (Group group : groups) {
+            addInheritance(group, player);
         }
 
         BasicDBList permissionsList = (BasicDBList) userObject.get("permissions");
@@ -453,9 +461,6 @@ public class PermissionsLoader {
     }
 
     public void createUserInfo(ProxiedPlayer player) {
-        if (player == null) {
-            return;
-        }
         DatabaseAPI.getMongoDatabase().updateDocument("mn2_users", new BasicDBObject("userUUID", player.getUniqueId().toString()),
                 new BasicDBObject("$set", new BasicDBObject("groups", new BasicDBList())));
         DatabaseAPI.getMongoDatabase().updateDocument("mn2_users", new BasicDBObject("userUUID", player.getUniqueId().toString()),
